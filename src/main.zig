@@ -2,19 +2,29 @@ const std = @import("std");
 const r = @import("root.zig");
 const expect = std.testing.expect;
 const print = std.debug.print;
-pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    print("All your {s} are belong to us.\n", .{"codebase"});
-    try printMsg();
-    const res = r.add(1, 2);
-    std.debug.print("blah {}\n", .{res});
-    const file = try std.fs.cwd().createFile("1.txt", .{});
-    defer file.close();
-    try file.writeAll("hello zig");
 
-    const str = "Misha Tra Ta ta";
-    const sub = str[3..str.len - 3];
-    print(sub, .{});
+
+const rl = @import("raylib");
+
+pub fn main() anyerror!void {
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const screenWidth = 800;
+    const screenHeight = 450;
+
+    rl.initWindow(screenWidth, screenHeight, "raylib-zig [core] example - basic window");
+    defer rl.closeWindow();
+    rl.setTargetFPS(120);
+
+    // Main game loop
+    while (!rl.windowShouldClose()) {
+        // Update
+        rl.beginDrawing();
+        defer rl.endDrawing();
+        rl.clearBackground(rl.Color.white);
+        rl.drawText("Congrats! You created your first window!", 190, 200, 20, rl.Color.light_gray);
+        rl.drawFPS(10, 10);
+    }
 }
 
 fn printMsg() !void {
