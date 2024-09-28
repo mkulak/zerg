@@ -36,6 +36,28 @@ pub fn main() anyerror!void {
     shader.locs[view] = rl.getShaderLocation(shader, "viewPos");
     const ambientLoc = rl.getShaderLocation(shader, "ambient");
     rl.setShaderValue(shader, ambientLoc, &[_]f32{ 0.1, 0.1, 0.1, 1.0 }, rl.ShaderUniformDataType.shader_uniform_vec4);
+    // const model: usize = @intCast(@intFromEnum(rl.ShaderLocationIndex.shader_loc_matrix_model));
+    // shader.locs[model] = rl.getShaderLocation(shader, "matModel");
+    
+    // After loading the shader
+    // const mvpLoc = rl.getShaderLocation(shader, "mvp");
+    // const modelLoc = rl.getShaderLocation(shader, "matModel");
+    // const normalLoc = rl.getShaderLocation(shader, "matNormal");
+    // const colDiffuseLoc = rl.getShaderLocation(shader, "colDiffuse");
+    //
+    // // In your main loop, before drawing
+    // const mvp = rl.gl.rlGetMatrixModelview();
+    // rl.setShaderValueMatrix(shader, mvpLoc, mvp);
+    //
+    // const model = rl.gl.rlGetMatrixModelview();
+    // rl.setShaderValueMatrix(shader, modelLoc, model);
+    //
+    // const normalMatrix = rl.gl.rlGetMatrixModelview();
+    // rl.setShaderValueMatrix(shader, normalLoc, normalMatrix);
+    //
+    // const colDiffuse = [_]f32{ 1.0, 1.0, 1.0, 1.0 };
+    // rl.setShaderValue(shader, colDiffuseLoc, &colDiffuse, rl.ShaderUniformDataType.shader_uniform_vec4);
+
 
     var lights = [MAX_LIGHTS]Light{
         try createLight(1, rl.Vector3.init(-2.0, 1.0, -2.0), rl.Vector3.zero(), rl.Color.yellow, shader),
@@ -116,7 +138,7 @@ fn createLight(lightType: i32, position: rl.Vector3, target: rl.Vector3, color: 
 }
 
 fn getLightValue(shader: rl.Shader, param: []const u8, light: usize) !i32 {
-    const name: []u8 = try std.fmt.allocPrint(allocator, "lights[{d}].{s}a", .{ light, param });
+    const name: []u8 = try std.fmt.allocPrint(allocator, "lights[{d}].{s}0", .{ light, param });
     defer allocator.free(name);
     name[name.len - 1] = 0;
     return rl.getShaderLocation(shader, name[0..name.len-1:0]);
