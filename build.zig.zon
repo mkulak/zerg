@@ -27,13 +27,14 @@
             .url = "https://github.com/Not-Nik/raylib-zig/archive/58df62807f62bef1db79538d04b37b9f79909d0a.tar.gz",
             .hash = "1220ff1a9e774784fe3f11ffe71bc0186f9e62eb0fe1727f676d038b62665a5c74c5",
         },
+        .zap = .{
+            .url = "https://github.com/zigzap/zap/archive/v0.8.0.tar.gz",
+            .hash = "12209936c3333b53b53edcf453b1670babb9ae8c2197b1ca627c01e72670e20c1a21",
+        },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
         "src",
-        // For example...
-        //"LICENSE",
-        //"README.md",
     },
 }

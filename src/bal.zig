@@ -1,46 +1,48 @@
 const std = @import("std");
 const print = std.debug.print;
 
-// always prints values that are divisible by 256
-// i.e. 0x1087cdc00 or 0x1087c3a00
-
-var foo: u8 align(256) = 92;
-
 pub fn main() anyerror!void {
-    const bar: u8 align(256) = 92;
-    // const str: *const [5:0]u8 = "hello";
-    // const str: []const u8 = "hello";
     var str: [5]u8 = "hello".*;
-    // var str: [5]u8 = [_]u8{'h', 'e', 'l', 'l', 'o'};
-    print("address of foo: 0x{x}\n", .{@intFromPtr(&foo)});
-    print("address of bar: 0x{x}\n", .{@intFromPtr(&bar)});
-    print("str={s}\n", .{str});
     str[0] = 'm';
-    // const slice = str[0..];
-    // const strPtr: *const u8 = &str[0];
-    // const slice = strPtr[0..1];
-    // const nextPtr: [*]const u8 = slice;
-    // print("{d}\n", .{strPtr.*});
-    // const int_ptr: usize = @intFromPtr(&str[0]);
-    // var i: usize = 0;
-    // while (i <= 4) : (i += 1) {
-    //     print("{c} ", .{str[i]});
-    // }
-    // print("\n", .{});
     print_mem(&str);
+
+    const arr = [_]u8 {65, 66, 67};
+    var arr2 = arr;
+    arr2[0] = 68;
+    print("{s}\n", .{arr});
+    print("{s}\n", .{arr2});
+    const arr3 = returnStack();
+    print("{d}\n", .{foo(arr[1..])});
+    print("{any}\n", .{arr3});
+}
+
+fn returnStack() []const u8 {
+    const res = [5]u8 { 1, 2, 3, 4, 5 };
+    return res[0..];
+}
+
+fn foo(in: []const u8) u32 {
+    var res: u32 = 0;
+    for (in) |i| {
+        res += i;
+    }
+    return res;
 }
 
 fn print_mem(in: []u8) void {
+    const base = @intFromPtr(&in);
     const int_size = @sizeOf(u32);
     const pointer_size = @sizeOf(*u8);
-    print("sizeOf u32: {d}\n", .{int_size});
-    print("sizeOf *u8: {d}\n", .{pointer_size});
 
+    var i: usize = 0;
+    while (i < pointer_size + int_size) : (i += 1) {
+        const ptr: *u8 = @ptrFromInt(base + i);
+        print("{d} ", .{ptr.*});
+    }
+    print("\n", .{});
 
     const in_ptr_as_int = @intFromPtr(in.ptr);
     print("in.ptr value: {d}\n", .{in_ptr_as_int});
-
-    const base = @intFromPtr(&in);
 
     const in_ptr_ptr: *usize = @ptrFromInt(base);
     const in_ptr_as_int_2 = in_ptr_ptr.*;
@@ -54,19 +56,13 @@ fn print_mem(in: []u8) void {
     const str_ptr: [*:0]u8 = @ptrFromInt(in_ptr_as_int_2);
     print("string: {s}\n", .{in});
     print("string 2: {s}\n", .{str_ptr});
-
-    // var i: usize = 0;
-    // while (i <= 20) : (i += 1) {
-    //     const ptr: *u8 = @ptrFromInt(base + i);
-    //     print("{d} ", .{ptr.*});
-    // }
-    print("\n", .{});
-
-    // i = 0;
-    // while (i <= 20) : (i += 1) {
-    //     const ptr: *u8 = @ptrFromInt(base + i);
-    //     print("{c} ", .{ptr.*});
-    // }
-    // print("\n", .{});
 }
-// 1000_0000 1010_0100
+
+// output:
+// 160 165 249 180 247 127 0 0 5 0 0 0 0
+// in.ptr value: 140701869909408
+// in.ptr value 2: 140701869909408
+// in.len: 5
+// in.len 2: 5
+// string: mello
+// string 2: mello
