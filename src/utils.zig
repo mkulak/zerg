@@ -36,5 +36,25 @@ pub fn minMax(a: u8, b: u8) struct { u8, u8 } {
     return .{ @min(a, b), @max(a, b) };
 }
 
+pub const XY = struct {
+    x: isize,
+    y: isize,
+
+    pub fn new(comptime x: comptime_int, comptime y: comptime_int) XY {
+        return XY{ .x = @intCast(x), .y = @intCast(y) };
+    }
+    pub fn from(comptime T: type, x: T, y: T) XY {
+        return XY{ .x = @intCast(x), .y = @intCast(y) };
+    }
+    pub fn mul(self: XY, comptime k: comptime_int) XY {
+        return XY{ .x = self.x * k, .y = self.y * k };
+    }
+    pub fn add(self: XY, comptime T: type, x: T, y: T) XY {
+        return XY{ .x = self.x + @as(isize, @intCast(x)), .y = self.y + @as(isize, @intCast(y)) };
+    }
+};
+
+
+
 
 

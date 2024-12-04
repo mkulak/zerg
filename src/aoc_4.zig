@@ -1,5 +1,6 @@
 const std = @import("std");
 const u = @import("utils.zig");
+const XY = u.XY;
 const print = std.debug.print;
 
 pub fn main() anyerror!void {
@@ -16,7 +17,7 @@ fn part1(lines: []const []const u8) anyerror!void {
         for (0..lines[y].len) |x| {
             if (lines[y][x] == 'X') {
                 for (directions) |dir| {
-                    if (check(lines, x, y, dir)) {
+                    if (check1(lines, x, y, dir)) {
                         sum += 1;
                     }
                 }
@@ -26,20 +27,18 @@ fn part1(lines: []const []const u8) anyerror!void {
     print("{d}\n", .{sum});
 }
 
-fn check(lines: []const []const u8, x: usize, y: usize, dir: XY) bool {
-    var nx: isize = @intCast(x);
-    var ny: isize = @intCast(y);
-    for (0..3) |i| {
-        ny += @intCast(dir.y);
-        if (ny < 0 or ny >= lines.len) return false;
-        nx += @intCast(dir.x);
-        if (nx < 0 or nx >= lines[0].len) return false;
-        const ch = lines[@intCast(ny)][@intCast(nx)];
-        if (ch != "MAS"[i]) {
-            return false;
-        }
-    }
-    return true;
+fn check1(lines: []const []const u8, x: usize, y: usize, dir: XY) bool {
+    const word = [_]u8 {
+        get(lines, dir.add(usize, x, y)) orelse 0,
+        get(lines, dir.mul(2).add(usize, x, y)) orelse 0,
+        get(lines, dir.mul(3).add(usize, x, y)) orelse 0,
+    };
+    return std.mem.eql(u8, &word, "MAS");
+}
+
+fn get(lines: []const []const u8, xy: XY) ?u8 {
+    if (xy.y < 0 or xy.y >= lines.len or xy.x < 0 or xy.x >= lines[@intCast(xy.y)].len) return null;
+    return lines[@intCast(xy.y)][@intCast(xy.x)];
 }
 
 fn part2(lines: []const []const u8) anyerror!void {
@@ -60,14 +59,6 @@ fn check2(lines: []const []const u8, x: usize, y: usize) bool {
     const m2, const s2 = u.minMax(lines[y - 1][x + 1], lines[y + 1][x - 1]);
     return m1 == 'M' and m2 == 'M' and s1 == 'S' and s2 == 'S';
 }
-
-const XY = struct {
-    x: i8,
-    y: i8,
-    fn new(x: i8, y: i8) XY {
-        return XY{ .x = x, .y = y };
-    }
-};
 
 const directions = [_]XY{
     XY.new(1, 0),
