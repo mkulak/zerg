@@ -1,19 +1,40 @@
 const std = @import("std");
+const u = @import("utils.zig");
 const print = std.debug.print;
-const jstring = @import("jstring");
-
-var gp = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
-const allocator = gp.allocator();
 
 pub fn main() anyerror!void {
-    defer _ = gp.deinit();
-    const cwd = std.fs.cwd();
-    const file = try cwd.openFile("input3.txt", .{});
-    defer file.close();
-    const content = try file.readToEndAlloc(allocator, 1 << 32);
-    defer allocator.free(content);
-    try part1(content);
-    try part2(content);
+    defer u.deinit();
+    const lines = try u.Lines.fromFile("input3.txt");
+    defer lines.deinit();
+    try part1(lines.content);
+    try part2(lines.content);
+}
+
+fn part1(mem: []const u8) !void {
+    var res: u32 = 0;
+    var iterator = Iterator.parse(mem);
+    while (iterator.next()) |token| {
+        switch (token) {
+            .mul => |mul| res += @as(u32, mul.a) * mul.b,
+            .Do => {},
+            .Dont => {},
+        }
+    }
+    print("{d}\n", .{res});
+}
+
+fn part2(mem: []const u8) !void {
+    var res: u32 = 0;
+    var enabled: bool = true;
+    var iterator = Iterator.parse(mem);
+    while (iterator.next()) |token| {
+        switch (token) {
+            .mul => |mul| res += if (enabled) @as(u32, mul.a) * mul.b else 0,
+            .Do => enabled = true,
+            .Dont => enabled = false,
+        }
+    }
+    print("{d}\n", .{res});
 }
 
 const Mul = struct {
@@ -77,30 +98,3 @@ const Iterator = struct {
         return res;
     }
 };
-
-fn part1(mem: []u8) anyerror!void {
-    var res: u32 = 0;
-    var iterator = Iterator.parse(mem);
-    while (iterator.next()) |token| {
-        switch (token) {
-            .mul => |mul| res += @as(u32, mul.a) * mul.b,
-            .Do => {},
-            .Dont => {},
-        }
-    }
-    print("{d}\n", .{res});
-}
-
-fn part2(mem: []u8) anyerror!void {
-    var res: u32 = 0;
-    var enabled: bool = true;
-    var iterator = Iterator.parse(mem);
-    while (iterator.next()) |token| {
-        switch (token) {
-            .mul => |mul| res += if (enabled) @as(u32, mul.a) * mul.b else 0,
-            .Do => enabled = true,
-            .Dont => enabled = false,
-        }
-    }
-    print("{d}\n", .{res});
-}
