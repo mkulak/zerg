@@ -3,7 +3,7 @@ const u = @import("utils.zig");
 const XY = u.XY;
 const print = std.debug.print;
 
-pub fn main() anyerror!void {
+pub fn main() !void {
     defer u.deinit();
     const lines = try u.Lines.fromFile("input4.txt");
     defer lines.deinit();
@@ -11,7 +11,7 @@ pub fn main() anyerror!void {
     try part2(lines.lines);
 }
 
-fn part1(lines: []const []const u8) anyerror!void {
+fn part1(lines: []const []const u8) !void {
     var sum: u32 = 0;
     for (0..lines.len) |y| {
         for (0..lines[y].len) |x| {
@@ -41,7 +41,7 @@ fn get(lines: []const []const u8, xy: XY) ?u8 {
     return lines[@intCast(xy.y)][@intCast(xy.x)];
 }
 
-fn part2(lines: []const []const u8) anyerror!void {
+fn part2(lines: []const []const u8) !void {
     var sum: u32 = 0;
     for (0..lines.len) |y| {
         for (0..lines[y].len) |x| {

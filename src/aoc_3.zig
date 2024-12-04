@@ -2,7 +2,7 @@ const std = @import("std");
 const u = @import("utils.zig");
 const print = std.debug.print;
 
-pub fn main() anyerror!void {
+pub fn main() !void {
     defer u.deinit();
     const lines = try u.Lines.fromFile("input3.txt");
     defer lines.deinit();
