@@ -1,21 +1,16 @@
 const std = @import("std");
+const u = @import("utils.zig");
 const print = std.debug.print;
 
-var gp = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
-const allocator = gp.allocator();
-
-pub fn main() anyerror!void {
-    defer _ = gp.deinit();
-    const cwd = std.fs.cwd();
-    const file = try cwd.openFile("input1.txt", .{});
-    const content = try file.readToEndAlloc(allocator, 1 << 32);
-    defer allocator.free(content);
-    var lines = std.mem.tokenizeScalar(u8, content, '\n');
-    var first = std.ArrayList(u32).init(allocator);
+pub fn main() !void {
+    defer u.deinit();
+    var lines = try u.Lines.fromFile("input1.txt");
+    defer lines.deinit();
+    var first = std.ArrayList(u32).init(u.allocator);
     defer first.deinit();
-    var second = std.ArrayList(u32).init(allocator);
+    var second = std.ArrayList(u32).init(u.allocator);
     defer second.deinit();
-    while (lines.next()) |line| {
+    for (lines.lines) |line| {
         var it = std.mem.tokenizeScalar(u8, line, ' ');
         const e1 = try std.fmt.parseInt(u32, it.next().?, 10);
         const e2 = try std.fmt.parseInt(u32, it.next().?, 10);
@@ -26,7 +21,7 @@ pub fn main() anyerror!void {
     try part2(first.items, second.items);
 }
 
-fn part1(first: []u32, second: []u32) anyerror!void {
+fn part1(first: []u32, second: []u32) !void {
     std.mem.sort(u32, first, {}, comptime std.sort.asc(u32));
     std.mem.sort(u32, second, {}, comptime std.sort.asc(u32));
     var sum: u64 = 0;
@@ -36,8 +31,8 @@ fn part1(first: []u32, second: []u32) anyerror!void {
     print("{d}\n", .{sum});
 }
 
-fn part2(first: []u32, second: []u32) anyerror!void {
-    var freq = std.AutoHashMap(u32, u32).init(allocator);
+fn part2(first: []u32, second: []u32) !void {
+    var freq = std.AutoHashMap(u32, u32).init(u.allocator);
     defer freq.deinit();
     for (second) |b| {
         const cur = try freq.getOrPutValue(b, 0);

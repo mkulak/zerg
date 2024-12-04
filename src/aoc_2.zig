@@ -1,27 +1,18 @@
 const std = @import("std");
+const u = @import("utils.zig");
 const print = std.debug.print;
 
-var gp = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
-const allocator = gp.allocator();
-
-const Iterator = std.mem.TokenIterator(u8, .scalar);
-
-pub fn main() anyerror!void {
-    defer _ = gp.deinit();
-    const cwd = std.fs.cwd();
-    const file = try cwd.openFile("input2.txt", .{});
-    defer file.close();
-    const content = try file.readToEndAlloc(allocator, 1 << 32);
-    defer allocator.free(content);
-    var lines1 = std.mem.tokenizeScalar(u8, content, '\n');
-    var lines2 = std.mem.tokenizeScalar(u8, content, '\n');
-    try part1(&lines1);
-    try part2(&lines2);
+pub fn main() !void {
+    defer u.deinit();
+    var lines = try u.Lines.fromFile("input2.txt");
+    defer lines.deinit();
+    try part1(lines.lines);
+    try part2(lines.lines);
 }
 
-fn part1(lines: *Iterator) anyerror!void {
+fn part1(lines: []const []const u8) !void {
     var safeCount: u32 = 0;
-    while (lines.next()) |line| {
+    for (lines) |line| {
         var it = std.mem.tokenizeScalar(u8, line, ' ');
         var cur = try std.fmt.parseInt(i32, it.next().?, 10);
         var asc: ?bool = null;
@@ -64,21 +55,12 @@ fn check(report: []i32, ignore: usize) bool {
     return true;
 }
 
-fn checkWithSkip(report: []i32) bool {
-    for (0..report.len) |i| {
-        if (check(report, i)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-fn part2(lines: *Iterator) anyerror!void {
+fn part2(lines: []const []const u8) !void {
     var safeCount: u32 = 0;
-    var report = std.ArrayList(i32).init(allocator);
+    var report = std.ArrayList(i32).init(u.allocator);
     defer report.deinit();
-    
-    while (lines.next()) |line| {
+
+    for (lines) |line| {
         var it = std.mem.tokenizeScalar(u8, line, ' ');
         while (it.next()) |token| {
             const elem  = try std.fmt.parseInt(i32, token, 10);
@@ -90,5 +72,14 @@ fn part2(lines: *Iterator) anyerror!void {
         report.clearRetainingCapacity();
     }
     print("{d}\n", .{safeCount});
+}
+
+fn checkWithSkip(report: []i32) bool {
+    for (0..report.len) |i| {
+        if (check(report, i)) {
+            return true;
+        }
+    }
+    return false;
 }
 
