@@ -41,9 +41,11 @@ pub fn main() !void {
         if (valid(update, ordering.items)) {
             sumValid += update[update.len / 2];
         } else {
-            const fixed = try fix(update, ordering.items);
-            sumAfterFix += fixed[fixed.len / 2];
-            u.allocator.free(fixed);
+            const res = try u.allocator.alloc(u32, update.len);
+            defer u.allocator.free(res);
+            std.mem.copyForwards(u32, res, update);
+            fix(res, ordering.items);
+            sumAfterFix += res[res.len / 2];
         }
     }
     for (updates.items) |update| {
@@ -64,11 +66,29 @@ fn valid(update: []const u32, ordering: []const [2]u32) bool {
     return true;
 }
 
-fn fix(update: []const u32, ordering: []const [2]u32) ![]const u32 {
-    var res = try u.allocator.alloc(u32, update.len);
-    _ = ordering;
-    @memset(res, 10);
-    res[0] = 1;
-    return res;
+fn fix(update: []u32, ordering: []const [2]u32) void {
+    for (0..update.len) |next| {
+        for (next..update.len) |i| {
+            const candidate = update[i];
+            if (isGood(update, i, ordering)) {
+                update[i] = update[next];
+                update[next] = candidate;
+                break;
+            }
+        }
+    }
+}
+
+fn isGood(update: []const u32, i: usize, ordering: []const [2]u32) bool {
+    for (ordering) |ord| {
+        if (ord[1] == update[i] and in(update, ord[0]) and !in(update[0..i], ord[0])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn in(xs: []const u32, x: u32) bool {
+    return std.mem.indexOfScalar(u32, xs, x) != null;
 }
 
