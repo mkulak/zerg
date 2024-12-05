@@ -18,7 +18,7 @@ pub const Lines = struct {
         const file = try cwd.openFile(path, .{});
         defer file.close();
         const content = try file.readToEndAlloc(allocator, 1 << 32);
-        var tokenized = std.mem.tokenizeScalar(u8, content, '\n');
+        var tokenized = std.mem.splitScalar(u8, content, '\n');
         var res = std.ArrayList([]const u8).init(allocator);
         while (tokenized.next()) |line| {
             try res.append(line);
