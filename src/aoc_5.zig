@@ -1,6 +1,5 @@
 const std = @import("std");
 const u = @import("utils.zig");
-const XY = u.XY;
 const print = std.debug.print;
 
 pub fn main() !void {

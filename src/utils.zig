@@ -8,8 +8,8 @@ pub fn deinit() void {
 }
 
 pub const Lines = struct {
-    lines: []const []const u8,
-    content: []const u8,
+    lines: [][]u8,
+    content: []u8,
 
     const Self = @This();
 
@@ -19,9 +19,10 @@ pub const Lines = struct {
         defer file.close();
         const content = try file.readToEndAlloc(allocator, 1 << 32);
         var tokenized = std.mem.splitScalar(u8, content, '\n');
-        var res = std.ArrayList([]const u8).init(allocator);
+        var res = std.ArrayList([]u8).init(allocator);
         while (tokenized.next()) |line| {
-            try res.append(line);
+            const start = @intFromPtr(line.ptr) - @intFromPtr(content.ptr);
+            try res.append(content[start..start + line.len]);
         }
         return .{ .lines = try res.toOwnedSlice(), .content = content };
     }
@@ -53,8 +54,3 @@ pub const XY = struct {
         return XY{ .x = self.x + @as(isize, @intCast(x)), .y = self.y + @as(isize, @intCast(y)) };
     }
 };
-
-
-
-
-
