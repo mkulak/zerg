@@ -5,62 +5,59 @@ const print = std.debug.print;
 
 pub fn main() !void {
     defer u.deinit();
-
     const lines = try u.Lines.fromFile("input6.txt");
     defer lines.deinit();
-
-    const guardIndex = std.mem.indexOfScalar(u8, lines.content, '^').?;
     const width = lines.lines[0].len;
-    const height = lines.lines.len;
+    const guardIndex = std.mem.indexOfScalar(u8, lines.content, '^').?;
     const initialGuard = XY.from(usize, guardIndex % (width + 1), guardIndex / (width + 1));
-    var guard = initialGuard;
-    var dir: usize = 3;
-    while (true) {
-        lines.lines[@intCast(guard.y)][@intCast(guard.x)] = 'X';
-        const d = directions[dir];
-        const nextPos = guard.add(isize, d.x, d.y);
-        if (nextPos.x < 0 or nextPos.x >= width or nextPos.y < 0 or nextPos.y >= height) {
-            break;
-        }
-        const next = lines.lines[@intCast(nextPos.y)][@intCast(nextPos.x)];
-        if (next == '#') {
-            dir = (dir + 1) % directions.len;
-        } else {
-            guard = nextPos;
-        }
-    }
-    const res = std.mem.count(u8, lines.content, "X");
-    print("{d}\n", .{res});
-    _  = std.mem.replace(u8, lines.content, "X", ".", lines.content);
     _ = std.mem.replace(u8, lines.content, "#", &[_]u8{OBSTACLE}, lines.content);
     _ = std.mem.replace(u8, lines.content, ".", &[_]u8{0}, lines.content);
     lines.content[guardIndex] = 0;
+    const res = part1(lines, initialGuard);
+    print("{d}\n", .{res});
+    cleanMap(lines);
     const res2 = part2(lines, initialGuard);
     print("{d}\n", .{res2});
 }
 
-fn part2(lines: u.Lines, guard: XY) u32 {
+fn part1(lines: u.Lines, initialGuard: XY) u32 {
+    _ = loops(lines.lines, initialGuard);
     var res: u32 = 0;
     const width = lines.lines[0].len;
     const height = lines.lines.len;
     for (0..height) |y| {
         for (0..width) |x| {
-            if (lines.lines[y][x] == 0 and (x != guard.x or y != guard.y)) {
-                // print("placing obstacle at {d},{d}\n", .{x, y});
-                lines.lines[y][x] = OBSTACLE;
-                if (loops(lines, guard)) {
-                    // print("loops!\n", .{});
-                    res += 1;
-                }
-                // printMap(lines);
-                lines.lines[y][x] = 0;
-                for (0..lines.content.len) |i| {
-                    lines.content[i] &= 0b1111_0000;
-                }
+            if (lines.lines[y][x] != OBSTACLE and lines.lines[y][x] != 0) {
+                res += 1;
             }
         }
     }
     return res;
+}
+
+fn part2(lines: u.Lines, initialGuard: XY) u32 {
+    var res: u32 = 0;
+    const width = lines.lines[0].len;
+    const height = lines.lines.len;
+    for (0..height) |y| {
+        for (0..width) |x| {
+            if (lines.lines[y][x] == 0 and (x != initialGuard.x or y != initialGuard.y)) {
+                lines.lines[y][x] = OBSTACLE;
+                if (loops(lines.lines, initialGuard)) {
+                    res += 1;
+                }
+                lines.lines[y][x] = 0;
+                cleanMap(lines);
+            }
+        }
+    }
+    return res;
+}
+
+fn cleanMap(lines: u.Lines) void {
+    for (0..lines.content.len) |i| {
+        lines.content[i] &= 0b1111_0000;
+    }
 }
 
 fn printMap(lines: u.Lines) void {
@@ -73,26 +70,26 @@ fn printMap(lines: u.Lines) void {
     }
 }
 
-fn loops(lines: u.Lines, initialGuard: XY) bool {
+fn loops(lines: [][]u8, initialGuard: XY) bool {
     var guard = initialGuard;
     var dir: u3 = 3;
-    const width = lines.lines[0].len;
-    const height = lines.lines.len;
-    mark(lines.lines, guard, dir);
+    const width = lines[0].len;
+    const height = lines.len;
+    mark(lines, guard, dir);
     while (true) {
         const d = directions[dir];
         const nextPos = guard.add(isize, d.x, d.y);
         if (nextPos.x < 0 or nextPos.x >= width or nextPos.y < 0 or nextPos.y >= height) {
             return false;
         }
-        const next = lines.lines[@intCast(nextPos.y)][@intCast(nextPos.x)];
+        const next = lines[@intCast(nextPos.y)][@intCast(nextPos.x)];
         if (next == OBSTACLE) {
             dir = (dir + 1) % @as(u3, @intCast(directions.len));
         } else {
-            if (wasHere(lines.lines, nextPos, dir)) {
+            if (wasHere(lines, nextPos, dir)) {
                 return true;
             }
-            mark(lines.lines, nextPos, dir);
+            mark(lines, nextPos, dir);
             guard = nextPos;
         }
     }
