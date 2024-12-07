@@ -19,49 +19,32 @@ pub fn main() !void {
             try equation.append(num);
         }
         try equations.append(try equation.toOwnedSlice());
-        // print("{any}\n", .{equations.getLast()});
         equation.clearRetainingCapacity();
     }
-    const res = part1(equations.items);
-    const res2 = part2(equations.items);
-    print("{d}\n", .{res});
+    var res1: u64 = 0;
+    var res2: u64 = 0;
+    for (equations.items) |e| {
+        if (isValid(e[2..], e[1], e[0], false)) {
+            res1 += e[0];
+        }
+        if (isValid(e[2..], e[1], e[0], true)) {
+            res2 += e[0];
+        }
+    }
+    print("{d}\n", .{res1});
     print("{d}\n", .{res2});
+    
     for (equations.items) |e| {
         u.allocator.free(e);
     }
 }
 
-fn part1(equations: [][]u64) u64 {
-    var res: u64 = 0;
-    for (equations) |equation| {
-        if (isValid(equation[2..], equation[1], equation[0])) {
-            res += equation[0];
-        }
-    }
-    return res;
-}
-
-fn isValid(equation: []u64, acc: u64, answer: u64) bool {
+fn isValid(equation: []u64, acc: u64, answer: u64, concatEnabled: bool) bool {
     if (equation.len == 0) return acc == answer;
     if (acc > answer) return false;
-    return isValid(equation[1..], acc + equation[0], answer) or isValid(equation[1..], acc * equation[0], answer);
-}
-
-fn part2(equations: [][]u64) u64 {
-    var res: u64 = 0;
-    for (equations) |equation| {
-        if (isValid2(equation[2..], equation[1], equation[0])) {
-            res += equation[0];
-        }
-    }
-    return res;
-}
-
-fn isValid2(equation: []u64, acc: u64, answer: u64) bool {
-    if (equation.len == 0) return acc == answer;
-    if (acc > answer) return false;
-    return isValid2(equation[1..], acc + equation[0], answer) or isValid2(equation[1..], acc * equation[0], answer)
-        or isValid2(equation[1..], concat(acc, equation[0]), answer);
+    return isValid(equation[1..], acc + equation[0], answer, concatEnabled) or
+        isValid(equation[1..], acc * equation[0], answer, concatEnabled)
+        or (concatEnabled and isValid(equation[1..], concat(acc, equation[0]), answer, true));
 }
 
 fn concat(a: u64, b: u64) u64 {
