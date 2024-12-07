@@ -48,7 +48,29 @@ fn isValid(equation: []u64, acc: u64, answer: u64) bool {
 }
 
 fn part2(equations: [][]u64) u64 {
-    _ = equations;
-    return 0;
+    var res: u64 = 0;
+    for (equations) |equation| {
+        if (isValid2(equation[2..], equation[1], equation[0])) {
+            res += equation[0];
+        }
+    }
+    return res;
+}
+
+fn isValid2(equation: []u64, acc: u64, answer: u64) bool {
+    if (equation.len == 0) return acc == answer;
+    if (acc > answer) return false;
+    return isValid2(equation[1..], acc + equation[0], answer) or isValid2(equation[1..], acc * equation[0], answer)
+        or isValid2(equation[1..], concat(acc, equation[0]), answer);
+}
+
+fn concat(a: u64, b: u64) u64 {
+    var res = a;
+    var c = b;
+    while (c != 0) {
+        res *= 10;
+        c /= 10;
+    }
+    return res + b;
 }
 
