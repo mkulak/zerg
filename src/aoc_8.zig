@@ -25,17 +25,16 @@ pub fn main() !void {
             try add(&map, c, xy);
         }
     }
-    var res2: u64 = 0;
-    res2 += 1;
     var antinodes = std.AutoHashMap(XY, void).init(u.allocator);
     defer antinodes.deinit();
+    var antinodes2 = std.AutoHashMap(XY, void).init(u.allocator);
+    defer antinodes2.deinit();
     var it = map.iterator();
     while (it.next()) |entry| {
-        // print("{c}={any}\n", .{entry.key_ptr.*, entry.value_ptr.*.items});
-        try countAntinodes(entry.value_ptr.*.items, width, height, &antinodes);
+        try countAntinodes2(entry.value_ptr.*.items, width, height, &antinodes2);
     }
     print("{d}\n", .{antinodes.count()});
-    print("{d}\n", .{res2});
+    print("{d}\n", .{antinodes2.count()});
 
 }
 
@@ -57,12 +56,31 @@ fn countAntinodes(antennas: []XY, width: usize, height: usize, map: *std.AutoHas
             const n1 = b.add(isize, dx, dy);
             const n2 = a.add(isize, -dx, -dy);
             if (valid(n1, width, height)) {
-                // print("{d},{d}\n", .{n1.x, n1.y});
                 try map.put(n1, {});
             }
             if (valid(n2, width, height)) {
-                // print("{d},{d}\n", .{n2.x, n2.y});
                 try map.put(n2, {});
+            }
+        }
+    }
+}
+
+fn countAntinodes2(antennas: []XY, width: usize, height: usize, map: *std.AutoHashMap(XY, void)) !void {
+    for (0..antennas.len) |i| {
+        for (i + 1..antennas.len) |j| {
+            const a = antennas[i];
+            const b = antennas[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            var next = b;
+            while (valid(next, width, height))  {
+                try map.put(next, {});
+                next = next.add(isize, dx, dy);
+            }
+            next = a;
+            while (valid(next, width, height))  {
+                try map.put(next, {});
+                next = next.add(isize, -dx, -dy);
             }
         }
     }
