@@ -2,7 +2,7 @@ const std = @import("std");
 const mem = std.mem;
 const testing = std.testing;
 
-fn ArrayDequeue(comptime T: type) type {
+pub fn ArrayDequeue(comptime T: type) type {
     return struct {
         const Self = @This();
 
@@ -113,7 +113,7 @@ fn ArrayDequeue(comptime T: type) type {
     };
 }
 
-pub fn QueueIterator(comptime T: type) type {
+fn QueueIterator(comptime T: type) type {
     return struct {
         dequeue: *ArrayDequeue(T),
         current: usize,
@@ -244,6 +244,50 @@ test "storage growth via addFirst when start < end" {
     defer testing.allocator.free(content);
     
     try testing.expectEqualStrings("12ABCDEFGHIZ", content);
+}
+
+test "storage growth via addLast when start > end" {
+    var unit = ArrayDequeue(u8).init(testing.allocator);
+    defer unit.deinit();
+
+    for (0..7) |i| {
+        try unit.addLast('A' + @as(u8, @intCast(i)));
+    }
+    try testing.expectEqual(7, unit.count());
+    try unit.addFirst('2');
+    try testing.expectEqual(8, unit.count());
+    try unit.addFirst('1');
+    try testing.expectEqual(9, unit.count());
+    try unit.addLast('Y');
+    try unit.addLast('Z');
+    try testing.expectEqual(11, unit.count());
+
+    const content = try contentToString(&unit);
+    defer testing.allocator.free(content);
+
+    try testing.expectEqualStrings("12ABCDEFGYZ", content);
+}
+
+test "storage growth via addFirst when start > end" {
+    var unit = ArrayDequeue(u8).init(testing.allocator);
+    defer unit.deinit();
+
+    for (0..7) |i| {
+        try unit.addLast('A' + @as(u8, @intCast(i)));
+    }
+    try testing.expectEqual(7, unit.count());
+    try unit.addFirst('3');
+    try testing.expectEqual(8, unit.count());
+    try unit.addFirst('2');
+    try testing.expectEqual(9, unit.count());
+    try unit.addFirst('1');
+    try unit.addFirst('0');
+    try testing.expectEqual(11, unit.count());
+
+    const content = try contentToString(&unit);
+    defer testing.allocator.free(content);
+
+    try testing.expectEqualStrings("0123ABCDEFG", content);
 }
 
 fn print(dequeue: *ArrayDequeue(u8)) void {
