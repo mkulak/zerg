@@ -1,12 +1,13 @@
 const std = @import("std");
 
 const Foo = struct {
+    bar: u8,
     foo: u32,
 };
 
 pub fn main() anyerror!void {
-    const foo1 = Foo { .foo = 11 };
-    const foo2 = Foo { .foo = 22 };
+    const foo1 = Foo { .bar = 1, .foo = 11 };
+    const foo2 = Foo { .bar = 2, .foo = 22 };
     const arr = [_] Foo {foo1, foo2};
 
     const arrSize = @sizeOf(@TypeOf(arr));
