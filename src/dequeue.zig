@@ -85,6 +85,10 @@ pub fn ArrayDequeue(comptime T: type) type {
             return QueueIterator(T).init(self);
         }
 
+        pub fn clear(self: *Self) void {
+            self.end = self.start;
+        }
+
         fn growIfNeeded(self: *Self) std.mem.Allocator.Error!void {
             if (self.data.len == 0) {
                 self.data = try self.allocator.alloc(T, 10);
@@ -170,37 +174,63 @@ test "basic dequeue operations" {
     try testing.expectEqual(3, unit.getLast());
     try testing.expectEqual(3, unit.popLast());
     try testing.expectEqual(1, unit.count());
+
+    try unit.addLast(2);
+    unit.clear();
+    try testing.expectEqual(0, unit.count());
+    try unit.addLast(11);
+    try unit.addFirst(10);
+    try testing.expectEqual(10, unit.getFirst());
+    try testing.expectEqual(11, unit.getLast());
 }
 
 test "wrap around" {
-    var unit = ArrayDequeue(u32).init(testing.allocator);
+    var unit = ArrayDequeue(u8).init(testing.allocator);
     defer unit.deinit();
 
-    try unit.addFirst(3);
+    try unit.addFirst('3');
     try testing.expectEqual(1, unit.count());
-    try unit.addFirst(2);
-    try unit.addFirst(1);
+    try unit.addFirst('2');
+    try unit.addFirst('1');
     try testing.expectEqual(3, unit.count());
     var iter = unit.iterator();
-    var expected: u32 = 1;
+    var expected: u8 = '1';
     while (iter.next()) |elem| {
         try testing.expectEqual(expected, elem);
         expected += 1;
     }
-    try testing.expectEqual(4, expected);
+    try testing.expectEqual('4', expected);
     try testing.expectEqual(3, unit.count());
 
-    try unit.addLast(4);
-    try testing.expectEqual(4, unit.getLast());
-    try testing.expectEqual(1, unit.getFirst());
+    try unit.addLast('4');
+    try testing.expectEqual('4', unit.getLast());
+    try testing.expectEqual('1', unit.getFirst());
 
-    expected = 1;
+    expected = '1';
     iter = unit.iterator();
     while (iter.next()) |elem| {
         try testing.expectEqual(expected, elem);
         expected += 1;
     }
-    try testing.expectEqual(5, expected);
+    try testing.expectEqual('5', expected);
+
+    _ = unit.popLast();
+    _ = unit.popFirst();
+    _ = unit.popFirst();
+    _ = unit.popFirst();
+    try testing.expectEqual(0, unit.count());
+
+    try unit.addLast('1');
+    try unit.addFirst('0');
+    try testing.expectEqual(2, unit.count());
+
+    expected = '0';
+    iter = unit.iterator();
+    while (iter.next()) |elem| {
+        try testing.expectEqual(expected, elem);
+        expected += 1;
+    }
+    try testing.expectEqual('2', expected);
 }
 
 test "storage growth via addLast when start < end" {
@@ -221,7 +251,7 @@ test "storage growth via addLast when start < end" {
 
     const content = try contentToString(&unit);
     defer testing.allocator.free(content);
-    
+
     try testing.expectEqualStrings("BCDEFGHIXYZ", content);
 }
 
@@ -242,7 +272,7 @@ test "storage growth via addFirst when start < end" {
 
     const content = try contentToString(&unit);
     defer testing.allocator.free(content);
-    
+
     try testing.expectEqualStrings("12ABCDEFGHIZ", content);
 }
 
