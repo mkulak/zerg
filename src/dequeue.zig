@@ -38,7 +38,7 @@ pub fn ArrayDequeue(comptime T: type) type {
         pub fn addLast(self: *Self, value: T) std.mem.Allocator.Error!void {
             try self.growIfNeeded();
             self.data[self.end] = value;
-            self.end = (self.end + 1) % self.data.len;
+            self.end = if (self.end < self.data.len - 1) self.end + 1 else 0;
         }
 
         pub fn popLast(self: *Self) ?T {
@@ -97,23 +97,44 @@ pub fn ArrayDequeue(comptime T: type) type {
             if (self.count() < self.data.len - 1) {
                 return;
             }
-            const oldLen = self.data.len;
-            const newData = try self.allocator.alloc(T, oldLen * 2);
-            if (self.start < self.end) {
-                @memcpy(newData[0..self.count()], self.data[self.start..self.end]);
-            } else {
-                const prefix = oldLen - self.start;
-                @memcpy(newData[0..prefix], self.data[self.start..oldLen]);
-                @memcpy(newData[prefix .. prefix + self.end], self.data[0..self.end]);
-            }
-            self.allocator.free(self.data);
-            self.data = newData;
-            self.start = 0;
-            self.end = oldLen - 1;
+            try self.ensureCapacity(self.data.len * 2);
         }
 
-        // todo: implement clear
-        // todo: implement toOwnedSlice
+        pub fn ensureCapacity(self: *Self, newCapacity: usize) std.mem.Allocator.Error!void {
+            const oldCapacity = self.data.len;
+            if (oldCapacity >= newCapacity + 1) {
+                return;
+            }
+            const newData = try self.allocator.alloc(T, newCapacity + 1);
+            std.debug.print("Growing array from {d} to {d}", .{ self.data.len, newData.len });
+            if (self.data.len > 0) {
+                self.copyContentInOrder(newData);
+                self.allocator.free(self.data);
+                self.start = 0;
+                self.end = oldCapacity - 1;
+            }
+            self.data = newData;
+        }
+
+        fn copyContentInOrder(self: *Self, dst: []T) void {
+            if (self.start < self.end) {
+                @memcpy(dst[0..self.count()], self.data[self.start..self.end]);
+            } else {
+                const prefix = self.data.len - self.start;
+                @memcpy(dst[0..prefix], self.data[self.start..self.data.len]);
+                @memcpy(dst[prefix .. prefix + self.end], self.data[0..self.end]);
+            }
+        }
+
+        pub fn toOwnedSlice(self: *Self) std.mem.Allocator.Error![]T {
+            const res = try self.allocator.alloc(T, self.count());
+            self.copyContentInOrder(res);
+            self.allocator.free(self.data);
+            self.data.len = 0;
+            self.start = 0;
+            self.end = 0;
+            return res;
+        }
     };
 }
 
@@ -184,35 +205,35 @@ test "basic dequeue operations" {
     try testing.expectEqual(11, unit.getLast());
 }
 
-test "wrap around" {
+test "wrap around from the left" {
     var unit = ArrayDequeue(u8).init(testing.allocator);
     defer unit.deinit();
 
-    try unit.addFirst('3');
+    try unit.addFirst('C');
     try testing.expectEqual(1, unit.count());
-    try unit.addFirst('2');
-    try unit.addFirst('1');
+    try unit.addFirst('B');
+    try unit.addFirst('A');
     try testing.expectEqual(3, unit.count());
     var iter = unit.iterator();
-    var expected: u8 = '1';
+    var expected: u8 = 'A';
     while (iter.next()) |elem| {
         try testing.expectEqual(expected, elem);
         expected += 1;
     }
-    try testing.expectEqual('4', expected);
+    try testing.expectEqual('D', expected);
     try testing.expectEqual(3, unit.count());
 
-    try unit.addLast('4');
-    try testing.expectEqual('4', unit.getLast());
-    try testing.expectEqual('1', unit.getFirst());
+    try unit.addLast('D');
+    try testing.expectEqual('D', unit.getLast());
+    try testing.expectEqual('A', unit.getFirst());
 
-    expected = '1';
+    expected = 'A';
     iter = unit.iterator();
     while (iter.next()) |elem| {
         try testing.expectEqual(expected, elem);
         expected += 1;
     }
-    try testing.expectEqual('5', expected);
+    try testing.expectEqual('E', expected);
 
     _ = unit.popLast();
     _ = unit.popFirst();
@@ -220,25 +241,50 @@ test "wrap around" {
     _ = unit.popFirst();
     try testing.expectEqual(0, unit.count());
 
-    try unit.addLast('1');
-    try unit.addFirst('0');
+    try unit.addLast('B');
+    try unit.addFirst('A');
     try testing.expectEqual(2, unit.count());
 
-    expected = '0';
-    iter = unit.iterator();
-    while (iter.next()) |elem| {
-        try testing.expectEqual(expected, elem);
-        expected += 1;
+
+    const content = try contentToString(&unit);
+    defer testing.allocator.free(content);
+
+    try testing.expectEqualStrings("AB", content);
+ }
+
+test "wrap around from the right" {
+    var unit = ArrayDequeue(u8).init(testing.allocator);
+    defer unit.deinit();
+
+    try unit.ensureCapacity(5);
+
+    for ("ABCDE") |ch| {
+        try unit.addLast(ch);
     }
-    try testing.expectEqual('2', expected);
-}
+    try testing.expectEqual(5, unit.count());
+
+    _ = unit.popFirst();
+    try unit.addLast('X');
+    try testing.expectEqual(5, unit.count());
+
+    const content = try contentToString(&unit);
+    defer testing.allocator.free(content);
+    try testing.expectEqualStrings("BCDEX", content);
+
+    _ = unit.popFirst();
+    try unit.addLast('Y');
+    try testing.expectEqual(5, unit.count());
+
+    const content2 = try contentToString(&unit);
+    defer testing.allocator.free(content2);
+    try testing.expectEqualStrings("CDEXY", content2);
+ }
 
 test "storage growth via addLast when start < end" {
     var unit = ArrayDequeue(u8).init(testing.allocator);
     defer unit.deinit();
-
-    for (0..9) |i| {
-        try unit.addLast('A' + @as(u8, @intCast(i)));
+    for ("ABCDEFGHI") |ch| {
+        try unit.addLast(ch);
     }
     try testing.expectEqual(9, unit.count());
     _ = unit.popFirst();
@@ -259,8 +305,8 @@ test "storage growth via addFirst when start < end" {
     var unit = ArrayDequeue(u8).init(testing.allocator);
     defer unit.deinit();
 
-    for (0..9) |i| {
-        try unit.addLast('A' + @as(u8, @intCast(i)));
+    for ("ABCDEFGHI") |ch| {
+        try unit.addLast(ch);
     }
     try testing.expectEqual(9, unit.count());
     try unit.addFirst('2');
@@ -280,8 +326,8 @@ test "storage growth via addLast when start > end" {
     var unit = ArrayDequeue(u8).init(testing.allocator);
     defer unit.deinit();
 
-    for (0..7) |i| {
-        try unit.addLast('A' + @as(u8, @intCast(i)));
+    for ("ABCDEFG") |ch| {
+        try unit.addLast(ch);
     }
     try testing.expectEqual(7, unit.count());
     try unit.addFirst('2');
@@ -302,8 +348,8 @@ test "storage growth via addFirst when start > end" {
     var unit = ArrayDequeue(u8).init(testing.allocator);
     defer unit.deinit();
 
-    for (0..7) |i| {
-        try unit.addLast('A' + @as(u8, @intCast(i)));
+    for ("ABCDEFG") |ch| {
+        try unit.addLast(ch);
     }
     try testing.expectEqual(7, unit.count());
     try unit.addFirst('3');
@@ -318,6 +364,24 @@ test "storage growth via addFirst when start > end" {
     defer testing.allocator.free(content);
 
     try testing.expectEqualStrings("0123ABCDEFG", content);
+}
+
+test "toOwnedSlice" {
+    var unit = ArrayDequeue(u8).init(testing.allocator);
+    defer unit.deinit();
+
+    for ("ABCDEF") |ch| {
+        try unit.addLast(ch);
+    }
+    for ("210") |ch| {
+        try unit.addFirst(ch);
+    }
+
+    try testing.expectEqual(9, unit.count());
+
+    const actual = try unit.toOwnedSlice();
+    defer testing.allocator.free(actual);
+    try testing.expectEqualStrings("012ABCDEF", actual);
 }
 
 fn print(dequeue: *ArrayDequeue(u8)) void {
