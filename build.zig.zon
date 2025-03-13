@@ -6,11 +6,10 @@
     //
     // It is redundant to include "zig" in this name because it is already
     // within the Zig package namespace.
-    .name = "zerg",
+    .name = .zerg,
 
-    // This is a [Semantic Version](https://semver.org/).
-    // In a future version of Zig it will be used for package deduplication.
-    .version = "0.0.0",
+    .fingerprint = 0xa50579a0357030e5,
+    .version = "0.0.1",
 
     // This field is optional.
     // This is currently advisory only; Zig does not yet do anything
@@ -23,13 +22,17 @@
     // Once all dependencies are fetched, `zig build` no longer requires
     // internet connectivity.
     .dependencies = .{
-        .@"raylib-zig" = .{
-            .url = "https://github.com/Not-Nik/raylib-zig/archive/58df62807f62bef1db79538d04b37b9f79909d0a.tar.gz",
-            .hash = "1220ff1a9e774784fe3f11ffe71bc0186f9e62eb0fe1727f676d038b62665a5c74c5",
-        },
-        .zap = .{
-            .url = "https://github.com/zigzap/zap/archive/v0.8.0.tar.gz",
-            .hash = "12209936c3333b53b53edcf453b1670babb9ae8c2197b1ca627c01e72670e20c1a21",
+        // .@"raylib-zig" = .{
+        //     .url = "https://github.com/Not-Nik/raylib-zig/archive/58df62807f62bef1db79538d04b37b9f79909d0a.tar.gz",
+        //     .hash = "1220ff1a9e774784fe3f11ffe71bc0186f9e62eb0fe1727f676d038b62665a5c74c5",
+        // },
+        // .zap = .{
+        //     .url = "https://github.com/zigzap/zap/archive/v0.8.0.tar.gz",
+        //     .hash = "12209936c3333b53b53edcf453b1670babb9ae8c2197b1ca627c01e72670e20c1a21",
+        // },
+        .dvui = .{
+            .url = "https://github.com/david-vanderson/dvui/archive/e6a3111343b0f717be7f7cbee0cfc077cac58199.tar.gz",
+            .hash = "dvui-0.2.0-AQFJmcpWygAJmp6FlcgveIfcFjHSq-pqEs0_2A7d2TVb",
         },
     },
     .paths = .{

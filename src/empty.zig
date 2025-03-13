@@ -4,12 +4,12 @@ const print = std.debug.print;
 
 pub fn main() !void {
     var general_purpose_allocator: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer general_purpose_allocator.deinit();
+    defer _ = general_purpose_allocator.deinit();
     const my: MyS =  .{ .size = 0 };
-    // const my2: MyS =  .empty;
-    print("{}", .{my});
-    print("{}", .{MyS.empty});
-    // print("{}", .{my2});
+    const my2: MyS =  .empty;
+    print("{}\n", .{my});
+    print("{}\n", .{MyS.empty});
+    print("{}\n", .{my2});
 }
 
 const MyS = struct {
