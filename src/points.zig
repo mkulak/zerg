@@ -105,11 +105,11 @@ fn gui_frame() !void {
         // rs.r is the pixel rectangle, rs.s is the scale factor (like for
         // hidpi screens or display scaling)
         var rect: Backend.c.SDL_FRect = .{
-            .x = (rs.r.x + 4 * rs.s),
-            .y = (rs.r.y + 4 * rs.s),
-            .w = (20 * rs.s),
-            .h = (20 * rs.s),
-        };
+        .x = (rs.r.x + 4 * rs.s),
+        .y = (rs.r.y + 4 * rs.s),
+        .w = (20 * rs.s),
+        .h = (20 * rs.s),
+    };
         _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 0, 255);
         _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
 
@@ -132,7 +132,20 @@ fn gui_frame() !void {
             _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
         }
     }
-    try dvui.Examples.demo();
+    const evts = dvui.events();
+    for (evts) |e| {
+        switch (e.evt) {
+            .mouse => |me| {
+                if (me.action == .press) {
+                    std.debug.print("Mouse clicked at ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
+                }
+                if (me.action == .motion) {
+                    std.debug.print("Mouse moved to ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
+                }
+            },
+            else => {},
+        }
+    }
 }
 
 const points = [_]XY{
