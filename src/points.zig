@@ -137,10 +137,13 @@ fn gui_frame() !void {
         switch (e.evt) {
             .mouse => |me| {
                 if (me.action == .press) {
-                    std.debug.print("Mouse clicked at ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
+                    std.debug.print("Mouse down at ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
+                }
+                if (me.action == .release) {
+                    std.debug.print("Mouse up at ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
                 }
                 if (me.action == .motion) {
-                    std.debug.print("Mouse moved to ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
+                    // std.debug.print("Mouse moved to ({d:.2}, {d:.2})\n", .{ me.p.x, me.p.y });
                 }
             },
             else => {},
@@ -148,10 +151,17 @@ fn gui_frame() !void {
     }
 }
 
-const points = [_]XY{
-    .{ .x = 10, .y = 20 },
-    .{ .x = 30, .y = 30 },
-    .{ .x = 45, .y = 13 },
+const points = blk: {
+    @setEvalBranchQuota(10000);
+    var gen = std.Random.DefaultPrng.init(43439533);
+    var random = gen.random();
+    var data: [100]XY = undefined;
+    for(0..data.len) |i| {
+        const x: f32 = @floatFromInt(random.intRangeAtMost(u32, 0, 2000));
+        const y: f32 = @floatFromInt(random.intRangeAtMost(u32, 0, 1600));
+        data[i] = XY { .x = x, .y = y};
+    }
+    break :blk data;
 };
 
 const XY = struct { x: f32, y: f32 };

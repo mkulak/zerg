@@ -8,4 +8,6 @@ To run
 
 ```sh 
 zig build run
+
+zig build points --release=fast
 ```
