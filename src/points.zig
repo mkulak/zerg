@@ -91,7 +91,7 @@ fn gui_frame() !void {
 
 
     {
-        var box = try dvui.box(@src(), .horizontal, .{ .expand = .both, .background = true, .margin = .{ .x = 8, .w = 8 } });
+        var box = try dvui.box(@src(), .horizontal, .{ .expand = .both, .background = true, .margin = .{ .x = 0, .w = 0 } });
         defer box.deinit();
 
         // Here is some arbitrary drawing that doesn't have to go through DVUI.
@@ -114,21 +114,21 @@ fn gui_frame() !void {
             .w = (20 * rs.s),
             .h = (20 * rs.s),
         };
-        _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 0, 255);
-        _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
-
-        rect.x += 24 * rs.s;
-        _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 0, 255);
-        _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
-
-        rect.x += 24 * rs.s;
-        _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 0, 255, 255);
-        _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
-        _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 255, 255);
-        _ = Backend.c.SDL_RenderLine(backend.renderer, (rs.r.x + 4 * rs.s), (rs.r.y + 30 * rs.s), (rs.r.x + rs.r.w - 8 * rs.s), (rs.r.y + 30 * rs.s));
+        // _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 0, 255);
+        // _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
+        //
+        // rect.x += 24 * rs.s;
+        // _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 0, 255);
+        // _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
+        //
+        // rect.x += 24 * rs.s;
+        // _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 0, 255, 255);
+        // _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
+        // _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 255, 255);
+        // _ = Backend.c.SDL_RenderLine(backend.renderer, (rs.r.x + 4 * rs.s), (rs.r.y + 30 * rs.s), (rs.r.x + rs.r.w - 8 * rs.s), (rs.r.y + 30 * rs.s));
 
         for (points) |p| {
-            _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 0, 255);
+            _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 0, 0);
             rect.x = p.x;
             rect.y = p.y;
             rect.w = 10;
@@ -136,13 +136,13 @@ fn gui_frame() !void {
             _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
         }
         if (mouseDown) |md| {
-            _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 255, 0);
+            _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 0, 0); // r g b a
             const mc = mouseCur orelse unreachable;
             rect.x = md.x;
             rect.y = md.y;
             rect.w = mc.x - md.x;
             rect.h = mc.y - md.y;
-            _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
+            _ = Backend.c.SDL_RenderRect(backend.renderer, &rect);
         }
     }
 }
@@ -151,13 +151,13 @@ fn init(rs: dvui.RectScale) void {
     var gen = std.Random.DefaultPrng.init(43439533);
     var random = gen.random();
     for (0..points.len) |i| {
-        const x: f32 = random.float(f32) * rs.r.w * rs.s;
-        const y: f32 = random.float(f32) * rs.r.h * rs.s;
+        const x: f32 = (random.float(f32) * (rs.r.w - 20) + 10) * rs.s;
+        const y: f32 = (random.float(f32) * (rs.r.h - 40) + 40) * rs.s;
         points[i] = XY{ .x = x, .y = y };
     }
 }
 
-var points: [100]XY = undefined;
+var points: [300]XY = undefined;
 var initialized: bool = false;
 
 var mouseDown: ?dvui.Point = null;
