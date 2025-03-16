@@ -37,6 +37,7 @@ pub fn main() !void {
 
         _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 0, 0, 255);
         _ = Backend.c.SDL_RenderClear(backend.renderer);
+        _ = Backend.c.SDL_SetRenderDrawBlendMode(backend.renderer, 0);
 
         check_input();
         try gui_frame();
@@ -90,7 +91,7 @@ fn gui_frame() !void {
 
 
     {
-        var box = try dvui.box(@src(), .horizontal, .{ .expand = .both, .background = false, .margin = .{ .x = 8, .w = 8 } });
+        var box = try dvui.box(@src(), .horizontal, .{ .expand = .both, .background = true, .margin = .{ .x = 8, .w = 8 } });
         defer box.deinit();
 
         // Here is some arbitrary drawing that doesn't have to go through DVUI.
@@ -126,6 +127,14 @@ fn gui_frame() !void {
         _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 255, 0, 255, 255);
         _ = Backend.c.SDL_RenderLine(backend.renderer, (rs.r.x + 4 * rs.s), (rs.r.y + 30 * rs.s), (rs.r.x + rs.r.w - 8 * rs.s), (rs.r.y + 30 * rs.s));
 
+        for (points) |p| {
+            _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 0, 255);
+            rect.x = p.x;
+            rect.y = p.y;
+            rect.w = 10;
+            rect.h = 10;
+            _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
+        }
         if (mouseDown) |md| {
             _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 255, 0);
             const mc = mouseCur orelse unreachable;
@@ -133,15 +142,6 @@ fn gui_frame() !void {
             rect.y = md.y;
             rect.w = mc.x - md.x;
             rect.h = mc.y - md.y;
-            _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
-        }
-
-        for (points) |p| {
-            _ = Backend.c.SDL_SetRenderDrawColor(backend.renderer, 0, 255, 0, 255);
-            rect.x = p.x;
-            rect.y = p.y;
-            rect.w = 10;
-            rect.h = 10;
             _ = Backend.c.SDL_RenderFillRect(backend.renderer, &rect);
         }
     }
