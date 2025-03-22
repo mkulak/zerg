@@ -10,4 +10,7 @@ To run
 zig build run
 
 zig build points --release=fast
+
+zig build --release=safe -- -mmacosx-version-min=10.9 -framework AppKit
+mv zig-out/bin/points MyApp.app/Contents/MacOS/MyApp
 ```

@@ -1,3 +1,4 @@
+const Quad = @import("quad.zig");
 const std = @import("std");
 const builtin = @import("builtin");
 const dvui = @import("dvui");
@@ -29,6 +30,8 @@ pub fn main() !void {
     var win = try dvui.Window.init(@src(), gpa, backend.backend(), .{});
     defer win.deinit();
 
+    std.debug.print("quad1: {any}\n", .{quad1});
+    std.debug.print("quad2: {any}\n", .{quad2});
     main_loop: while (true) {
         const nstime = win.beginWait(backend.hasEvent());
         try win.begin(nstime);
@@ -88,7 +91,6 @@ fn gui_frame() !void {
     const lorem = "Quad tree demo";
     try tl.addText(lorem, .{});
     tl.deinit();
-
 
     {
         var box = try dvui.box(@src(), .horizontal, .{ .expand = .both, .background = true, .margin = .{ .x = 0, .w = 0 } });
@@ -165,3 +167,6 @@ var mouseUp: ?dvui.Point = null;
 var mouseCur: ?dvui.Point = null;
 
 const XY = struct { x: f32, y: f32 };
+
+var quad1: Quad = .{ .box = .{ .x = 10 } };
+var quad2: Quad = .{ .box = .{ .y = 20 } };
