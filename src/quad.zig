@@ -6,6 +6,12 @@ const inf = std.math.inf(f32);
 pub const Point = struct {
     x: f32,
     y: f32,
+
+    pub fn format(self: Point, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("[{d:.2}, {d:.2}]", .{ self.x, self.y});
+    }
 };
 
 pub const Box = struct {
@@ -19,6 +25,12 @@ pub const Box = struct {
         self.min.y = @min(self.min.y, p.y);
         self.max.x = @max(self.max.x, p.x);
         self.max.y = @max(self.max.y, p.y);
+    }
+
+    pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("{{min: {}, max: {}}}", .{ self.min, self.max});
     }
 };
 
@@ -40,38 +52,48 @@ const NodeId = usize;
 const nullId: NodeId = std.math.maxInt(NodeId);
 
 const Node = struct {
-    children: [2][2]NodeId
+    children: [2][2]?NodeId
 };
 
 const QuadTree = struct {
     bbox: Box,
-    root: NodeId,
+    root: ?NodeId,
     nodes: std.ArrayList(Node),
 
     const Self = @This();
 
-    fn build(points: []Point, alloc: std.mem.Allocator) Self {
+    pub fn build(points: []Point, alloc: std.mem.Allocator) !Self {
         var res: Self = undefined;
         res.nodes = std.ArrayList(Node).init(alloc);
         res.bbox = bbox(points);
-        res.root = res.build_impl(points);
+        res.root = try res.buildImpl(points);
         return res;
     }
 
-    fn buildImpl(self: *Self, points: []Point) ?NodeId {
+    pub fn deinit(self: *Self) void {
+        self.nodes.deinit();
+    }
+
+    fn buildImpl(self: *Self, points: []Point) !?NodeId {
         if (points.len == 0) return null;
         const result = self.nodes.items.len;
-        self.nodes.append(.{});
+        try self.nodes.append(.{ .children = undefined});
         if (points.len == 1) return result;
         const center = middle(self.bbox.min, self.bbox.max);
         const splitY = partition(points, center, true);
         const splitXLower = partition(points[0..splitY], center, false);
         const splitXUpper = partition(points[splitY..points.len], center, false);
-        self.nodes.items[result].children[0][0] = self.buildImpl(points[0..splitXLower]);
-        self.nodes.items[result].children[0][1] = self.buildImpl(points[splitXLower..splitY]);
-        self.nodes.items[result].children[1][0] = self.buildImpl(points[splitY..splitXUpper]);
-        self.nodes.items[result].children[1][1] = self.buildImpl(points[splitXUpper..]);
+        self.nodes.items[result].children[0][0] = try self.buildImpl(points[0..splitXLower]);
+        self.nodes.items[result].children[0][1] = try self.buildImpl(points[splitXLower..splitY]);
+        self.nodes.items[result].children[1][0] = try self.buildImpl(points[splitY..splitXUpper]);
+        self.nodes.items[result].children[1][1] = try self.buildImpl(points[splitXUpper..]);
         return result;
+    }
+
+    pub fn format( self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("QuadTree(bbox: {}, root: {?})", .{ self.bbox, self.root});
     }
 };
 
@@ -92,12 +114,14 @@ fn partition(points: []Point, center: Point, useY: bool) usize {
     return start - 1;
 }
 
-pub fn main() void {
+pub fn main() !void {
     var gpa = std.heap.DebugAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
     var points = [_]Point { .{.x = 1, .y = 2}};
-    const q = QuadTree.build(&points, allocator);
+    // var points = [_]Point { .{.x = 1, .y = 2}, .{.x = 32, .y = 72}};
+    var q = try QuadTree.build(&points, allocator);
+    defer q.deinit();
     std.debug.print("{any}\n", .{q});
 }
 
