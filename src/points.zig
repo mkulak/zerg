@@ -1,4 +1,5 @@
 const Quad = @import("quad.zig");
+const Box = Quad.Box;
 const std = @import("std");
 const builtin = @import("builtin");
 const dvui = @import("dvui");
@@ -30,8 +31,11 @@ pub fn main() !void {
     var win = try dvui.Window.init(@src(), gpa, backend.backend(), .{});
     defer win.deinit();
 
-    std.debug.print("quad1: {any}\n", .{quad1});
-    std.debug.print("quad2: {any}\n", .{quad2});
+    var b1 = Box {.min = .{ .x = 1, .y = 2}, .max = .{.x = 10, .y = 20} };
+    const p = Quad.Point {.x = 22, .y = 32 };
+    std.debug.print("b1: {any}\n", .{b1});
+    b1.extend(p);
+    std.debug.print("b1: {any}\n", .{b1});
     main_loop: while (true) {
         const nstime = win.beginWait(backend.hasEvent());
         try win.begin(nstime);
@@ -168,5 +172,6 @@ var mouseCur: ?dvui.Point = null;
 
 const XY = struct { x: f32, y: f32 };
 
-var quad1: Quad = .{ .box = .{ .x = 10 } };
-var quad2: Quad = .{ .box = .{ .y = 20 } };
+var b = Box {};
+// var quad1: Quad = .{ .box = .{ .x = 10 } };
+// var quad2: Quad = .{ .box = .{ .y = 20 } };
